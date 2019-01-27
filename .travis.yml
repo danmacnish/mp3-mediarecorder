@@ -1,0 +1,33 @@
+cache: npm
+language: node_js
+node_js:
+    - lts/*
+
+stages:
+    - cache
+    - checks
+    - name: release
+      if: branch = master AND commit_message =~ /(feat|fix|BREAKING CHANGE)/
+
+jobs:
+    include:
+        - stage: cache
+          name: 'Warm up cache'
+          script: echo "Warming up npm cache"
+        - stage: checks
+          name: 'Build'
+          script: npm run build
+        - stage: checks
+          name: 'Typescript'
+          script: npm run tsc
+        - stage: checks
+          name: 'Unit tests'
+          script: npm test
+        - stage: checks
+          name: 'Check formatting'
+          script: npm run format:check
+        - stage: release
+          name: Release to npm
+          script:
+              - npm run build
+              - npx semantic-release
