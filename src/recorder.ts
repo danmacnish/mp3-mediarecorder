@@ -105,6 +105,10 @@ export const getMp3MediaRecorder = (config: GlobalConfig): Promise<typeof Mp3Med
             return this.audioContext;
         }
 
+        getSourceNode(): MediaStreamAudioSourceNode {
+            return this.sourceNode;
+        }
+
         private onWorkerMessage = (event: MessageEvent): void => {
             const message: WorkerPostMessage = event.data;
 
