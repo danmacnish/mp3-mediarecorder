@@ -26,7 +26,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/eliasmeire/mp3-mediarecorder.git"
+    "url": "git+https://github.com/danmacnish/mp3-mediarecorder.git"
   },
   "keywords": [
     "mediarecorder",
