@@ -1,7 +1,8 @@
 {
   "name": "mp3-mediarecorder",
   "version": "3.4.5",
-  "description": "MediaRecorder ponyfill that records audio as mp3",
+  "description": "MediaRecorder ponyfill that records audio as mp3 - modified by dan macnish",
+  "private": true,
   "main": "dist/mp3-mediarecorder.umd.js",
   "module": "dist/mp3-mediarecorder.es5.js",
   "es2015": "dist/mp3-mediarecorder.es2015.js",
