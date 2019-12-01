@@ -100,6 +100,7 @@ export const getMp3MediaRecorder = (config: GlobalConfig): Promise<typeof Mp3Med
             return new Error(
                 `Uncaught DOMException: Failed to execute '${method}' on 'MediaRecorder': The MediaRecorder's state is '${this.state}'.`
             );
+        }
             
         getAudioContext(): AudioContext {
             return this.audioContext;
