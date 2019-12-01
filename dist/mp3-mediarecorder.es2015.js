@@ -909,7 +909,9 @@ const mp3EncoderWorker = () => {
         if (!WebAssembly.instantiateStreaming) {
             return getWasmModuleFallback(url, imports);
         }
-        return WebAssembly.instantiateStreaming(fetch(url), imports).catch(() => getWasmModuleFallback(url, imports));
+        return WebAssembly
+            .instantiateStreaming(fetch(url), imports)
+            .catch(() => getWasmModuleFallback(url, imports));
     };
     const getVmsgImports = () => {
         const onExit = (err) => {
@@ -1013,7 +1015,7 @@ const getMp3MediaRecorder = (config) => {
     });
     const worker = new Worker(URL.createObjectURL(workerBlob));
     class Mp3MediaRecorder extends EventTarget {
-        constructor(stream, options = {}) {
+        constructor(stream, { audioContext } = {}) {
             super();
             this.mimeType = MP3_MIME_TYPE;
             this.state = 'inactive';
@@ -1029,7 +1031,7 @@ const getMp3MediaRecorder = (config) => {
                         break;
                     }
                     case PostMessageType.ERROR: {
-                        const error = new DOMException(message.error);
+                        const error = new Error(message.error);
                         const fallbackEvent = new Event('error');
                         fallbackEvent.error = error;
                         const event = window.MediaRecorderErrorEvent
@@ -1057,9 +1059,8 @@ const getMp3MediaRecorder = (config) => {
                     }
                 }
             };
-            const safeOptions = Object.assign({}, options, { audioContext: new SafeAudioContext() });
             this.stream = stream;
-            this.audioContext = safeOptions.audioContext;
+            this.audioContext = audioContext || new SafeAudioContext();
             this.sourceNode = this.audioContext.createMediaStreamSource(stream);
             this.gainNode = createGain(this.audioContext);
             this.gainNode.gain.value = 1;
@@ -1069,6 +1070,9 @@ const getMp3MediaRecorder = (config) => {
             worker.onmessage = this.onWorkerMessage;
         }
         start() {
+            if (this.state !== 'inactive') {
+                throw this.getStateError('start');
+            }
             this.processorNode.onaudioprocess = event => {
                 worker.postMessage(dataAvailableMessage(event.inputBuffer.getChannelData(0)));
             };
@@ -1077,22 +1081,34 @@ const getMp3MediaRecorder = (config) => {
             worker.postMessage(startRecordingMessage({ sampleRate: this.audioContext.sampleRate }));
         }
         stop() {
+            if (this.state !== 'recording') {
+                throw this.getStateError('stop');
+            }
             this.processorNode.disconnect();
             this.audioContext.suspend();
             worker.postMessage(stopRecordingMessage());
         }
         pause() {
+            if (this.state !== 'recording') {
+                throw this.getStateError('pause');
+            }
             this.audioContext.suspend();
             this.state = 'paused';
             this.dispatchEvent(new Event('pause'));
         }
         resume() {
+            if (this.state !== 'paused') {
+                throw this.getStateError('resume');
+            }
             this.audioContext.resume();
             this.state = 'recording';
             this.dispatchEvent(new Event('resume'));
         }
         requestData() {
             // not implemented, dataavailable event only fires when encoding is finished
+        }
+        getStateError(method) {
+            return new Error(`Uncaught DOMException: Failed to execute '${method}' on 'MediaRecorder': The MediaRecorder's state is '${this.state}'.`);
         }
         getAudioContext() {
             return this.audioContext;
